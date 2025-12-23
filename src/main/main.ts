@@ -1,0 +1,154 @@
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import * as path from "path";
+import * as fs from "fs";
+import { buildMenu, refreshMenu } from "./menu";
+import { store } from "./store";
+
+let mainWindow: BrowserWindow | null = null;
+
+function createWindow(): void {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    minWidth: 600,
+    minHeight: 400,
+    titleBarStyle: "hiddenInset",
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+
+  // Open DevTools in development
+  mainWindow.webContents.openDevTools();
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+
+  // Set up application menu
+  const menu = buildMenu(mainWindow);
+  const { Menu } = require("electron");
+  Menu.setApplicationMenu(menu);
+}
+
+// IPC Handlers
+ipcMain.handle("file:read", async (_, filePath: string) => {
+  console.log("Main: file:read called with", filePath);
+  try {
+    const content = fs.readFileSync(filePath, "utf-8");
+    console.log("Main: file read success, length:", content.length);
+    store.addRecentFile(filePath);
+    refreshMenu(mainWindow);
+    return { success: true, content, filePath };
+  } catch (error) {
+    console.error("Main: file:read error", error);
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle(
+  "file:save",
+  async (_, filePath: string, content: string) => {
+    try {
+      fs.writeFileSync(filePath, content, "utf-8");
+      store.addRecentFile(filePath);
+      refreshMenu(mainWindow);
+      return { success: true, filePath };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
+    }
+  }
+);
+
+ipcMain.handle("file:save-dialog", async (_, defaultPath?: string) => {
+  if (!mainWindow) return { success: false, error: "No window" };
+
+  const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: defaultPath || "untitled.md",
+    filters: [
+      { name: "Markdown", extensions: ["md"] },
+      { name: "All Files", extensions: ["*"] },
+    ],
+  });
+
+  if (result.canceled || !result.filePath) {
+    return { success: false, canceled: true };
+  }
+
+  return { success: true, filePath: result.filePath };
+});
+
+ipcMain.handle("file:open-dialog", async () => {
+  if (!mainWindow) return { success: false, error: "No window" };
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ["openFile"],
+    filters: [
+      { name: "Markdown", extensions: ["md", "markdown"] },
+      { name: "All Files", extensions: ["*"] },
+    ],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { success: false, canceled: true };
+  }
+
+  return { success: true, filePath: result.filePaths[0] };
+});
+
+ipcMain.handle("recent:get", () => {
+  return store.getRecentFiles();
+});
+
+ipcMain.handle(
+  "dialog:confirm",
+  async (_, message: string, detail?: string) => {
+    if (!mainWindow) return false;
+
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: "question",
+      buttons: ["Don't Save", "Cancel", "Save"],
+      defaultId: 2,
+      message,
+      detail,
+    });
+
+    // 0 = Don't Save, 1 = Cancel, 2 = Save
+    return result.response;
+  }
+);
+
+// App lifecycle
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
+
+// Handle file open from Finder (macOS)
+app.on("open-file", (event, filePath) => {
+  event.preventDefault();
+  if (mainWindow) {
+    mainWindow.webContents.send("file:open-path", filePath);
+  } else {
+    app.whenReady().then(() => {
+      if (mainWindow) {
+        mainWindow.webContents.send("file:open-path", filePath);
+      }
+    });
+  }
+});
