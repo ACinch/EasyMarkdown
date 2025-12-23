@@ -8,14 +8,14 @@
     />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https: http:"
     />
-    <title>OSX Markdown Editor</title>
+    <title>EasyMarkdown</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="bg-editor-bg text-editor-text font-sans h-screen flex flex-col overflow-hidden">
-    <!-- Title bar drag region -->
-    <div class="h-7 bg-tab-bg flex-shrink-0 app-drag"></div>
+    <!-- Title bar drag region (macOS only) -->
+    <div id="title-bar-drag" class="h-7 bg-tab-bg flex-shrink-0 app-drag"></div>
 
     <!-- Tab bar -->
     <div id="tab-bar" class="flex bg-tab-bg border-b border-tab-border flex-shrink-0 overflow-x-auto">
@@ -123,6 +123,87 @@
         <p class="text-lg mb-2">No files open</p>
         <p class="text-sm">Press <kbd class="px-2 py-1 bg-gray-700 rounded">Cmd+N</kbd> to create a new file</p>
         <p class="text-sm">or <kbd class="px-2 py-1 bg-gray-700 rounded">Cmd+O</kbd> to open a file</p>
+      </div>
+    </div>
+
+    <!-- Image Dialog -->
+    <div id="image-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-gray-800 rounded-lg shadow-xl w-96 p-6">
+        <h3 class="text-lg font-semibold text-white mb-4">Insert Image</h3>
+
+        <div class="space-y-4">
+          <!-- Alt text -->
+          <div>
+            <label class="block text-sm text-gray-300 mb-1">Alt Text</label>
+            <input
+              type="text"
+              id="image-alt"
+              class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Image description"
+            />
+          </div>
+
+          <!-- Source type tabs -->
+          <div class="flex border-b border-gray-600">
+            <button
+              id="image-tab-url"
+              class="px-4 py-2 text-sm font-medium text-blue-400 border-b-2 border-blue-400"
+            >
+              URL
+            </button>
+            <button
+              id="image-tab-file"
+              class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-300"
+            >
+              Local File
+            </button>
+          </div>
+
+          <!-- URL input -->
+          <div id="image-url-section">
+            <input
+              type="text"
+              id="image-url"
+              class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://example.com/image.png"
+            />
+          </div>
+
+          <!-- File input -->
+          <div id="image-file-section" class="hidden">
+            <div class="flex gap-2">
+              <input
+                type="text"
+                id="image-file-path"
+                class="flex-1 bg-gray-700 text-white rounded px-3 py-2 text-sm focus:outline-none"
+                placeholder="No file selected"
+                readonly
+              />
+              <button
+                id="image-file-browse"
+                class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm"
+              >
+                Browse
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 mt-6">
+          <button
+            id="image-cancel"
+            class="px-4 py-2 text-gray-300 hover:text-white text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            id="image-insert"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm"
+          >
+            Insert
+          </button>
+        </div>
       </div>
     </div>
 

@@ -6,13 +6,15 @@ import { store } from "./store";
 
 let mainWindow: BrowserWindow | null = null;
 
+const isMac = process.platform === "darwin";
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 600,
     minHeight: 400,
-    titleBarStyle: "hiddenInset",
+    titleBarStyle: isMac ? "hiddenInset" : "default",
     webPreferences: {
       preload: path.join(__dirname, "../preload/preload.js"),
       contextIsolation: true,
@@ -83,6 +85,24 @@ ipcMain.handle("file:open-dialog", async () => {
     properties: ["openFile"],
     filters: [
       { name: "Markdown", extensions: ["md", "markdown"] },
+      { name: "All Files", extensions: ["*"] },
+    ],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { success: false, canceled: true };
+  }
+
+  return { success: true, filePath: result.filePaths[0] };
+});
+
+ipcMain.handle("file:open-image-dialog", async () => {
+  if (!mainWindow) return { success: false, error: "No window" };
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ["openFile"],
+    filters: [
+      { name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg"] },
       { name: "All Files", extensions: ["*"] },
     ],
   });

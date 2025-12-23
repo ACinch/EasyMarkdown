@@ -3,8 +3,8 @@ import {
   prefixLines,
   prefixLinesNumbered,
   insertAtLineStart,
-  insertText,
 } from "./editor";
+import { showImageDialog } from "./imagedialog";
 
 export type FormatType =
   | "bold"
@@ -47,7 +47,7 @@ export function applyFormat(format: FormatType): void {
       wrapSelection("[", "](url)");
       break;
     case "image":
-      insertText("![alt text](image-url)");
+      showImageDialog();
       break;
     case "ul":
       prefixLines("- ");

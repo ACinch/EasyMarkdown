@@ -8,6 +8,8 @@ import {
 import * as path from "path";
 import { store } from "./store";
 
+const isMac = process.platform === "darwin";
+
 export function buildMenu(mainWindow: BrowserWindow | null): Menu {
   const recentFiles = store.getRecentFiles();
 
@@ -34,20 +36,25 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
       : [{ label: "No Recent Files", enabled: false }];
 
   const template: MenuItemConstructorOptions[] = [
-    {
-      label: app.name,
-      submenu: [
-        { role: "about" },
-        { type: "separator" },
-        { role: "services" },
-        { type: "separator" },
-        { role: "hide" },
-        { role: "hideOthers" },
-        { role: "unhide" },
-        { type: "separator" },
-        { role: "quit" },
-      ],
-    },
+    // macOS app menu
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: "about" as const },
+              { type: "separator" as const },
+              { role: "services" as const },
+              { type: "separator" as const },
+              { role: "hide" as const },
+              { role: "hideOthers" as const },
+              { role: "unhide" as const },
+              { type: "separator" as const },
+              { role: "quit" as const },
+            ],
+          },
+        ]
+      : []),
     {
       label: "File",
       submenu: [
@@ -110,6 +117,13 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
             }
           },
         },
+        // Add Exit for Windows/Linux
+        ...(!isMac
+          ? [
+              { type: "separator" as const },
+              { role: "quit" as const, label: "Exit" },
+            ]
+          : []),
       ],
     },
     {
@@ -121,7 +135,17 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
         { role: "cut" },
         { role: "copy" },
         { role: "paste" },
-        { role: "selectAll" },
+        ...(isMac
+          ? [
+              { role: "pasteAndMatchStyle" as const },
+              { role: "delete" as const },
+              { role: "selectAll" as const },
+            ]
+          : [
+              { role: "delete" as const },
+              { type: "separator" as const },
+              { role: "selectAll" as const },
+            ]),
       ],
     },
     {
@@ -259,9 +283,26 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
       label: "Window",
       submenu: [
         { role: "minimize" },
-        { role: "zoom" },
-        { type: "separator" },
-        { role: "front" },
+        ...(isMac
+          ? [
+              { type: "separator" as const },
+              { role: "front" as const },
+              { type: "separator" as const },
+              { role: "window" as const },
+            ]
+          : [{ role: "close" as const }]),
+      ],
+    },
+    {
+      role: "help",
+      submenu: [
+        {
+          label: "Learn More",
+          click: async () => {
+            const { shell } = require("electron");
+            await shell.openExternal("https://github.com/ACinch/EasyMarkdown");
+          },
+        },
       ],
     },
   ];

@@ -1,7 +1,7 @@
 {
-  "name": "osxmd",
-  "version": "1.0.0",
-  "description": "A simple markdown editor for macOS",
+  "name": "easymarkdown",
+  "version": "0.1.0",
+  "description": "A simple, cross-platform markdown editor",
   "main": "dist/main/main.js",
   "scripts": {
     "start": "pnpm build && electron .",
@@ -10,9 +10,13 @@
     "build:preload": "tsc -p tsconfig.preload.json",
     "build:renderer": "node scripts/build-renderer.js",
     "build:css": "tailwindcss -i src/renderer/styles.css -o dist/renderer/styles.css",
-    "copy:html": "cp src/renderer/index.html dist/renderer/",
+    "copy:html": "node -e \"require('fs').copyFileSync('src/renderer/index.html', 'dist/renderer/index.html')\"",
     "dev": "concurrently \"pnpm build:main -- --watch\" \"pnpm build:preload -- --watch\" \"pnpm build:css -- --watch\"",
-    "package": "electron-builder"
+    "package": "electron-builder",
+    "package:mac": "electron-builder --mac",
+    "package:win": "electron-builder --win",
+    "package:linux": "electron-builder --linux",
+    "package:all": "electron-builder --mac --win --linux"
   },
   "author": "",
   "license": "MIT",
@@ -31,10 +35,18 @@
     "marked-highlight": "^2.1.0"
   },
   "build": {
-    "appId": "com.osxmd.app",
-    "productName": "OSX Markdown Editor",
+    "appId": "com.easymarkdown.app",
+    "productName": "EasyMarkdown",
     "mac": {
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis", "zip"]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Office"
     },
     "files": [
       "dist/**/*",

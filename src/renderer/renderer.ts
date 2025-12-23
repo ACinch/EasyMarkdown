@@ -13,11 +13,13 @@ import {
 import { initEditor, setContent, getContent, focus } from "./editor";
 import { initPreview, renderMarkdown, clear as clearPreview } from "./preview";
 import { initCommandBar, applyFormat, FormatType } from "./commandbar";
+import { initImageDialog } from "./imagedialog";
 
 // Type for electron API
 declare global {
   interface Window {
     electron: {
+      platform: string;
       readFile: (filePath: string) => Promise<{
         success: boolean;
         content?: string;
@@ -34,6 +36,11 @@ declare global {
         canceled?: boolean;
       }>;
       showOpenDialog: () => Promise<{
+        success: boolean;
+        filePath?: string;
+        canceled?: boolean;
+      }>;
+      showOpenImageDialog: () => Promise<{
         success: boolean;
         filePath?: string;
         canceled?: boolean;
@@ -62,6 +69,8 @@ let viewModeLabel: HTMLElement;
 let editor: HTMLTextAreaElement;
 
 function init(): void {
+  const isMac = window.electron.platform === "darwin";
+
   // Get DOM elements
   editorContainer = document.getElementById("editor-container")!;
   previewContainer = document.getElementById("preview-container")!;
@@ -74,12 +83,26 @@ function init(): void {
   const preview = document.getElementById("preview")!;
   const newTabBtn = document.getElementById("new-tab-btn")!;
   const toggleViewBtn = document.getElementById("toggle-view-btn")!;
+  const titleBarDragRegion = document.getElementById("title-bar-drag")!;
+
+  // Hide macOS title bar drag region on Windows/Linux
+  if (!isMac && titleBarDragRegion) {
+    titleBarDragRegion.classList.add("hidden");
+  }
+
+  // Update keyboard shortcut hints for non-macOS
+  if (!isMac) {
+    document.querySelectorAll("kbd").forEach((kbd) => {
+      kbd.textContent = kbd.textContent?.replace("Cmd", "Ctrl") || kbd.textContent;
+    });
+  }
 
   // Initialize components
   initTabs(tabsContainer, handleTabChange, handleTabsUpdate);
   initEditor(editor, handleContentChange);
   initPreview(preview);
   initCommandBar(commandBar);
+  initImageDialog();
 
   // Set up event listeners
   newTabBtn.addEventListener("click", () => createNewTab());

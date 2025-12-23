@@ -9,11 +9,15 @@ export interface FileResult {
 }
 
 export interface ElectronAPI {
+  // Platform info
+  platform: string;
+
   // File operations
   readFile: (filePath: string) => Promise<FileResult>;
   saveFile: (filePath: string, content: string) => Promise<FileResult>;
   showSaveDialog: (defaultPath?: string) => Promise<FileResult>;
   showOpenDialog: () => Promise<FileResult>;
+  showOpenImageDialog: () => Promise<FileResult>;
 
   // Recent files
   getRecentFiles: () => Promise<string[]>;
@@ -35,6 +39,9 @@ export interface ElectronAPI {
 }
 
 const api: ElectronAPI = {
+  // Platform info
+  platform: process.platform,
+
   // File operations
   readFile: (filePath: string) => ipcRenderer.invoke("file:read", filePath),
   saveFile: (filePath: string, content: string) =>
@@ -42,6 +49,7 @@ const api: ElectronAPI = {
   showSaveDialog: (defaultPath?: string) =>
     ipcRenderer.invoke("file:save-dialog", defaultPath),
   showOpenDialog: () => ipcRenderer.invoke("file:open-dialog"),
+  showOpenImageDialog: () => ipcRenderer.invoke("file:open-image-dialog"),
 
   // Recent files
   getRecentFiles: () => ipcRenderer.invoke("recent:get"),
