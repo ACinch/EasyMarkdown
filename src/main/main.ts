@@ -22,9 +22,6 @@ function createWindow(): void {
 
   mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
 
-  // Open DevTools in development
-  mainWindow.webContents.openDevTools();
-
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
@@ -37,15 +34,12 @@ function createWindow(): void {
 
 // IPC Handlers
 ipcMain.handle("file:read", async (_, filePath: string) => {
-  console.log("Main: file:read called with", filePath);
   try {
     const content = fs.readFileSync(filePath, "utf-8");
-    console.log("Main: file read success, length:", content.length);
     store.addRecentFile(filePath);
     refreshMenu(mainWindow);
     return { success: true, content, filePath };
   } catch (error) {
-    console.error("Main: file:read error", error);
     return { success: false, error: (error as Error).message };
   }
 });

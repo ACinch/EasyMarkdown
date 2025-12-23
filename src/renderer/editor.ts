@@ -54,14 +54,12 @@ export function insertText(text: string): void {
 }
 
 export function wrapSelection(before: string, after: string): void {
-  console.log("wrapSelection called", { before, after, editorElement: !!editorElement });
   if (!editorElement) return;
 
   const start = editorElement.selectionStart;
   const end = editorElement.selectionEnd;
   const value = editorElement.value;
   const selectedText = value.substring(start, end);
-  console.log("Selection:", { start, end, selectedText });
 
   const newText = before + selectedText + after;
   editorElement.value = value.substring(0, start) + newText + value.substring(end);

@@ -36,10 +36,7 @@ export interface ElectronAPI {
 
 const api: ElectronAPI = {
   // File operations
-  readFile: (filePath: string) => {
-    console.log("Preload: readFile called with", filePath);
-    return ipcRenderer.invoke("file:read", filePath);
-  },
+  readFile: (filePath: string) => ipcRenderer.invoke("file:read", filePath),
   saveFile: (filePath: string, content: string) =>
     ipcRenderer.invoke("file:save", filePath, content),
   showSaveDialog: (defaultPath?: string) =>
@@ -58,11 +55,7 @@ const api: ElectronAPI = {
     ipcRenderer.on("file:new", callback);
   },
   onFileOpenPath: (callback: (filePath: string) => void) => {
-    console.log("Preload: registering file:open-path listener");
-    ipcRenderer.on("file:open-path", (_, filePath) => {
-      console.log("Preload: file:open-path received", filePath);
-      callback(filePath);
-    });
+    ipcRenderer.on("file:open-path", (_, filePath) => callback(filePath));
   },
   onFileSave: (callback: () => void) => {
     ipcRenderer.on("file:save", callback);

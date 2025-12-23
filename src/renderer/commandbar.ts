@@ -69,7 +69,6 @@ export function initCommandBar(container: HTMLElement): void {
     button.addEventListener("mousedown", (e) => {
       e.preventDefault();
       const format = (button as HTMLElement).dataset.format as FormatType;
-      console.log("Command bar button clicked:", format);
       if (format) {
         applyFormat(format);
       }

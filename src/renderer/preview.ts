@@ -28,14 +28,11 @@ export function initPreview(element: HTMLElement): void {
 
 export async function renderMarkdown(content: string): Promise<void> {
   if (!previewElement) return;
-  console.log("renderMarkdown called, content length:", content.length);
 
   try {
     const html = await marked.parse(content);
-    console.log("Markdown rendered, html length:", (html as string).length);
     previewElement.innerHTML = html as string;
   } catch (error) {
-    console.error("Failed to render markdown:", error);
     previewElement.innerHTML = `<p class="text-red-500">Error rendering markdown</p>`;
   }
 }

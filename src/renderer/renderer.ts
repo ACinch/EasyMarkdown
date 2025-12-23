@@ -62,8 +62,6 @@ let viewModeLabel: HTMLElement;
 let editor: HTMLTextAreaElement;
 
 function init(): void {
-  console.log("Renderer init starting...");
-
   // Get DOM elements
   editorContainer = document.getElementById("editor-container")!;
   previewContainer = document.getElementById("preview-container")!;
@@ -77,12 +75,6 @@ function init(): void {
   const newTabBtn = document.getElementById("new-tab-btn")!;
   const toggleViewBtn = document.getElementById("toggle-view-btn")!;
 
-  console.log("DOM elements found:", {
-    editorContainer: !!editorContainer,
-    editor: !!editor,
-    tabsContainer: !!tabsContainer
-  });
-
   // Initialize components
   initTabs(tabsContainer, handleTabChange, handleTabsUpdate);
   initEditor(editor, handleContentChange);
@@ -90,50 +82,20 @@ function init(): void {
   initCommandBar(commandBar);
 
   // Set up event listeners
-  newTabBtn.addEventListener("click", () => {
-    console.log("New tab button clicked");
-    createNewTab();
-  });
-  toggleViewBtn.addEventListener("click", () => {
-    console.log("Toggle view clicked");
-    toggleViewMode();
-  });
+  newTabBtn.addEventListener("click", () => createNewTab());
+  toggleViewBtn.addEventListener("click", () => toggleViewMode());
 
   // Set up IPC listeners
-  console.log("Setting up IPC listeners, electron API:", !!window.electron);
-
-  window.electron.onFileNew(() => {
-    console.log("IPC: file:new received");
-    createNewTab();
-  });
-  window.electron.onFileOpenPath((filePath) => {
-    console.log("IPC: file:open-path received", filePath);
-    openFile(filePath);
-  });
-  window.electron.onFileSave(() => {
-    console.log("IPC: file:save received");
-    saveCurrentTab();
-  });
-  window.electron.onFileSaveAs(() => {
-    console.log("IPC: file:save-as received");
-    saveCurrentTabAs();
-  });
-  window.electron.onTabClose(() => {
-    console.log("IPC: tab:close received");
-    closeCurrentTab();
-  });
-  window.electron.onFormatApply((format) => {
-    console.log("IPC: format:apply received", format);
-    applyFormat(format as FormatType);
-  });
-  window.electron.onViewToggle(() => {
-    console.log("IPC: view:toggle received");
-    toggleViewMode();
-  });
+  window.electron.onFileNew(() => createNewTab());
+  window.electron.onFileOpenPath((filePath) => openFile(filePath));
+  window.electron.onFileSave(() => saveCurrentTab());
+  window.electron.onFileSaveAs(() => saveCurrentTabAs());
+  window.electron.onTabClose(() => closeCurrentTab());
+  window.electron.onFormatApply((format) => applyFormat(format as FormatType));
+  window.electron.onViewToggle(() => toggleViewMode());
 
   // Show empty state initially
   updateUI();
-  console.log("Renderer init complete");
 }
 
 function handleTabChange(tab: Tab | null): void {
@@ -188,15 +150,12 @@ function updateUI(): void {
 }
 
 function toggleViewMode(): void {
-  console.log("toggleViewMode called, hasTabs:", hasTabs(), "current mode:", viewMode);
   if (!hasTabs()) return;
 
   viewMode = viewMode === "raw" ? "preview" : "raw";
-  console.log("New viewMode:", viewMode);
 
   if (viewMode === "preview") {
     const tab = getActiveTab();
-    console.log("Preview mode, active tab:", tab?.fileName);
     if (tab) {
       renderMarkdown(tab.content);
     }
@@ -222,8 +181,6 @@ async function openFile(filePath: string): Promise<void> {
   if (result.success && result.content !== undefined) {
     const fileName = filePath.split("/").pop() || "Untitled";
     createTab(filePath, fileName, result.content);
-  } else {
-    console.error("Failed to open file:", result.error);
   }
 }
 
@@ -236,10 +193,8 @@ async function saveCurrentTab(): Promise<boolean> {
     if (result.success) {
       markTabSaved(tab.id);
       return true;
-    } else {
-      console.error("Failed to save file:", result.error);
-      return false;
     }
+    return false;
   } else {
     return saveCurrentTabAs();
   }
@@ -266,10 +221,8 @@ async function saveCurrentTabAs(): Promise<boolean> {
     const fileName = dialogResult.filePath.split("/").pop() || "Untitled";
     markTabSaved(tab.id, dialogResult.filePath, fileName);
     return true;
-  } else {
-    console.error("Failed to save file:", saveResult.error);
-    return false;
   }
+  return false;
 }
 
 async function closeCurrentTab(): Promise<void> {
@@ -295,14 +248,7 @@ async function closeCurrentTab(): Promise<void> {
     // result === 0: Don't Save - continue closing
   }
 
-  // Force close without checking dirty state again
-  const index = (await import("./tabs")).getAllTabs().findIndex((t) => t.id === tab.id);
-  const tabs = (await import("./tabs")).getAllTabs().filter((t) => t.id !== tab.id);
-
-  // Manually handle tab removal to avoid the confirm dialog again
-  const tabModule = await import("./tabs");
-
-  // Since we've already handled the dirty check, we need to mark it clean first
+  // Mark clean to avoid double confirmation
   if (tab.isDirty) {
     tab.savedContent = tab.content;
     tab.isDirty = false;
