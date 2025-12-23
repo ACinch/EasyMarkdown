@@ -1,6 +1,6 @@
 {
   "name": "easymarkdown",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A simple, cross-platform markdown editor",
   "main": "dist/main/main.js",
   "scripts": {
@@ -18,7 +18,10 @@
     "package:linux": "electron-builder --linux",
     "package:all": "electron-builder --mac --win --linux"
   },
-  "author": "",
+  "author": {
+    "name": "EasyMarkdown",
+    "email": "easymarkdown@example.com"
+  },
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.10.0",
@@ -45,7 +48,7 @@
       "target": ["nsis", "zip"]
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": ["AppImage"],
       "category": "Office"
     },
     "files": [
