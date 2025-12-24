@@ -202,7 +202,8 @@ async function openFile(filePath: string): Promise<void> {
 
   const result = await window.electron.readFile(filePath);
   if (result.success && result.content !== undefined) {
-    const fileName = filePath.split("/").pop() || "Untitled";
+    // Handle both Unix (/) and Windows (\) path separators
+    const fileName = filePath.split(/[/\\]/).pop() || "Untitled";
     createTab(filePath, fileName, result.content);
   }
 }

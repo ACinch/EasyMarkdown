@@ -8,6 +8,11 @@ let mainWindow: BrowserWindow | null = null;
 
 const isMac = process.platform === "darwin";
 
+// Set app name for development mode
+if (app.name === "Electron" || app.name === "electron") {
+  app.name = "EasyMarkdown";
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,

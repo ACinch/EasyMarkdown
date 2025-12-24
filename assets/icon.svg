@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5"/>
+      <stop offset="100%" style="stop-color:#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded rectangle background -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg)"/>
+  <!-- M letter -->
+  <path d="M88 384 L88 128 L152 128 L208 240 L264 128 L328 128 L328 384 L272 384 L272 224 L208 336 L144 224 L144 384 Z" fill="white"/>
+  <!-- Down arrow (markdown symbol) -->
+  <polygon points="392,192 392,320 344,256" fill="white"/>
+  <polygon points="392,192 392,320 440,256" fill="white" opacity="0.7"/>
+</svg>
