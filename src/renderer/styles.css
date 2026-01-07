@@ -157,3 +157,25 @@
 .hljs {
   @apply bg-transparent;
 }
+
+/* Milkdown WYSIWYG editor styles */
+#preview .milkdown {
+  @apply h-full;
+}
+
+#preview .editor {
+  @apply h-full outline-none;
+}
+
+#preview .ProseMirror {
+  @apply h-full outline-none;
+}
+
+#preview .ProseMirror:focus {
+  @apply outline-none;
+}
+
+/* Make the preview container fill available space when Milkdown is active */
+#preview-container:not(.hidden) #preview {
+  @apply h-full;
+}

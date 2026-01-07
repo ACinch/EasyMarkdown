@@ -1,4 +1,5 @@
 import { insertText } from "./editor";
+import { isEditorActive, insertMarkdown } from "./wysiwyg";
 
 let dialog: HTMLElement;
 let altInput: HTMLInputElement;
@@ -56,7 +57,12 @@ export function initImageDialog(): void {
     }
 
     if (src) {
-      insertText(`![${alt}](${src})`);
+      const markdown = `![${alt}](${src})`;
+      if (isEditorActive()) {
+        insertMarkdown(markdown);
+      } else {
+        insertText(markdown);
+      }
     }
 
     hideDialog();

@@ -11,9 +11,16 @@ import {
   Tab,
 } from "./tabs";
 import { initEditor, setContent, getContent, focus } from "./editor";
-import { initPreview, renderMarkdown, clear as clearPreview } from "./preview";
 import { initCommandBar, applyFormat, FormatType } from "./commandbar";
 import { initImageDialog } from "./imagedialog";
+import {
+  initWysiwyg,
+  createEditor,
+  setContent as setWysiwygContent,
+  getContent as getWysiwygContent,
+  focus as focusWysiwyg,
+  destroyEditor,
+} from "./wysiwyg";
 
 // Type for electron API
 declare global {
@@ -100,7 +107,7 @@ function init(): void {
   // Initialize components
   initTabs(tabsContainer, handleTabChange, handleTabsUpdate);
   initEditor(editor, handleContentChange);
-  initPreview(preview);
+  initWysiwyg(preview, handleWysiwygChange);
   initCommandBar(commandBar);
   initImageDialog();
 
@@ -117,20 +124,63 @@ function init(): void {
   window.electron.onFormatApply((format) => applyFormat(format as FormatType));
   window.electron.onViewToggle(() => toggleViewMode());
 
+  // Set up drag and drop for files
+  setupDragAndDrop();
+
   // Show empty state initially
   updateUI();
+}
+
+function setupDragAndDrop(): void {
+  // Prevent default drag behavior
+  document.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  document.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  document.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  // Handle file drop
+  document.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    // Filter and open markdown files
+    for (const file of Array.from(files)) {
+      const filePath = (file as any).path as string;
+      if (filePath && isMarkdownFile(filePath)) {
+        await openFile(filePath);
+      }
+    }
+  });
+}
+
+function isMarkdownFile(filePath: string): boolean {
+  const ext = filePath.toLowerCase().split(".").pop();
+  return ext === "md" || ext === "markdown" || ext === "mdown" || ext === "mkd";
 }
 
 function handleTabChange(tab: Tab | null): void {
   if (tab) {
     setContent(tab.content);
     if (viewMode === "preview") {
-      renderMarkdown(tab.content);
+      setWysiwygContent(tab.content);
     }
     focus();
   } else {
     setContent("");
-    clearPreview();
+    destroyEditor();
   }
   updateUI();
 }
@@ -143,9 +193,15 @@ function handleContentChange(content: string): void {
   const tab = getActiveTab();
   if (tab) {
     updateTabContent(tab.id, content);
-    if (viewMode === "preview") {
-      renderMarkdown(content);
-    }
+  }
+}
+
+function handleWysiwygChange(content: string): void {
+  const tab = getActiveTab();
+  if (tab) {
+    updateTabContent(tab.id, content);
+    // Also update the raw editor so it stays in sync
+    setContent(content);
   }
 }
 
@@ -172,16 +228,29 @@ function updateUI(): void {
   }
 }
 
-function toggleViewMode(): void {
+async function toggleViewMode(): Promise<void> {
   if (!hasTabs()) return;
 
-  viewMode = viewMode === "raw" ? "preview" : "raw";
+  const tab = getActiveTab();
 
-  if (viewMode === "preview") {
-    const tab = getActiveTab();
+  if (viewMode === "raw") {
+    // Switching from raw to preview
+    viewMode = "preview";
     if (tab) {
-      renderMarkdown(tab.content);
+      await createEditor(tab.content);
+      focusWysiwyg();
     }
+  } else {
+    // Switching from preview to raw
+    // Get content from WYSIWYG before destroying
+    if (tab) {
+      const wysiwygContent = getWysiwygContent();
+      updateTabContent(tab.id, wysiwygContent);
+      setContent(wysiwygContent);
+    }
+    viewMode = "raw";
+    await destroyEditor();
+    focus();
   }
 
   updateUI();

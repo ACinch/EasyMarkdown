@@ -5,6 +5,10 @@ import {
   insertAtLineStart,
 } from "./editor";
 import { showImageDialog } from "./imagedialog";
+import {
+  applyFormat as applyWysiwygFormat,
+  isEditorActive,
+} from "./wysiwyg";
 
 export type FormatType =
   | "bold"
@@ -21,6 +25,17 @@ export type FormatType =
   | "quote";
 
 export function applyFormat(format: FormatType): void {
+  // If WYSIWYG editor is active, use its formatting
+  if (isEditorActive()) {
+    if (format === "image") {
+      showImageDialog();
+    } else {
+      applyWysiwygFormat(format);
+    }
+    return;
+  }
+
+  // Otherwise use raw editor formatting
   switch (format) {
     case "bold":
       wrapSelection("**", "**");
