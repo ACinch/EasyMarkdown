@@ -5,18 +5,22 @@ A simple, cross-platform markdown editor built with Electron.
 ## Project Overview
 
 A lightweight markdown editor that allows users to:
-- Edit markdown files with both raw text and WYSIWYG editing
-- Preview formatted markdown with dark mode support
+- Edit markdown files with syntax highlighting (CodeMirror 6)
+- Preview formatted markdown with WYSIWYG editing (Milkdown)
+- Split view with resizable panes
 - Manage multiple files via a tabbed interface
-- Quick-access recent files from the application menu
-- Format text using a command bar
-- Drag-and-drop files to open them
+- Customize theme colors (foreground, background, headings, table headers)
+- Find and replace text
+- Export to PDF and HTML
+- Create tables with a visual editor
+- Auto-save and session restore
 - Auto-update from GitHub releases
 
 ## Technology Stack
 
 - **Electron** 28.x - Cross-platform desktop application framework
 - **TypeScript** - All source code
+- **CodeMirror 6** - Syntax highlighted raw editor
 - **Milkdown** - WYSIWYG markdown editor (ProseMirror-based)
 - **Tailwind CSS** - Utility-first CSS framework
 - **esbuild** - Renderer bundling
@@ -28,113 +32,176 @@ A lightweight markdown editor that allows users to:
 ```
 osxmd/
 ├── src/
-│   ├── main/              # Electron main process
-│   │   ├── main.ts        # App lifecycle, IPC handlers
-│   │   ├── menu.ts        # Application menu
-│   │   ├── store.ts       # Recent files storage
-│   │   └── updater.ts     # Auto-update logic
+│   ├── main/                # Electron main process
+│   │   ├── main.ts          # App lifecycle, IPC handlers, PDF export
+│   │   ├── menu.ts          # Application menu
+│   │   ├── store.ts         # Settings & session storage
+│   │   └── updater.ts       # Auto-update logic
 │   ├── preload/
-│   │   └── preload.ts     # IPC bridge (contextBridge)
-│   └── renderer/          # UI (runs in browser context)
-│       ├── renderer.ts    # Main orchestrator
-│       ├── editor.ts      # Raw textarea editor
-│       ├── wysiwyg.ts     # Milkdown WYSIWYG editor
-│       ├── tabs.ts        # Tab management
-│       ├── commandbar.ts  # Formatting toolbar
-│       ├── imagedialog.ts # Image insertion dialog
-│       ├── styles.css     # Tailwind + custom styles
+│   │   └── preload.ts       # IPC bridge (contextBridge)
+│   └── renderer/            # UI (runs in browser context)
+│       ├── renderer.ts      # Main orchestrator, state management
+│       ├── editor.ts        # CodeMirror 6 editor with syntax highlighting
+│       ├── wysiwyg.ts       # Milkdown WYSIWYG editor
+│       ├── tabs.ts          # Tab management with context menu
+│       ├── commandbar.ts    # Formatting toolbar
+│       ├── findreplace.ts   # Find & replace functionality
+│       ├── statusbar.ts     # Word count, cursor position
+│       ├── outline.ts       # Document outline panel
+│       ├── export.ts        # PDF/HTML export
+│       ├── tabledialog.ts   # Table creation dialog
+│       ├── imagedialog.ts   # Image insertion dialog
+│       ├── settingsdialog.ts # Settings UI
+│       ├── styles.css       # Tailwind + custom styles
 │       └── index.html
-├── dist/                  # Compiled output + packages
-├── assets/                # App icons
+├── dist/                    # Compiled output + packages
+├── assets/                  # App icons
 ├── scripts/
-│   └── build-renderer.js  # esbuild config for renderer
-└── package.json           # Dependencies & build config
+│   └── build-renderer.js    # esbuild config for renderer
+└── package.json             # Dependencies & build config
 ```
 
-## Current Features (v0.1.7)
+## Current Features (v0.1.9)
 
-### 1. Dual Editing Modes
-- **Raw mode**: Textarea-based markdown editing
-- **Preview mode**: WYSIWYG editing with Milkdown
-- Toggle with `Cmd+P` or toolbar button
+### 1. Editor Modes
+- **Raw mode**: CodeMirror 6 with markdown syntax highlighting
+- **Split mode**: Side-by-side raw editor and WYSIWYG preview
+- **Preview mode**: Full WYSIWYG editing with Milkdown
+- Cycle through modes with `Cmd+P` or toolbar button
 - Content syncs bidirectionally between modes
 
-### 2. Dark Mode
-- Toggle with moon icon button or `Cmd+D`
-- Auto-detects system theme preference on startup
-- Syncs when system theme changes
-- Applies to preview/WYSIWYG mode
+### 2. Theme Customization
+- Configurable colors: foreground, background, headings, table headers
+- Light/Dark/Custom presets for each color
+- Dynamic theme updates (no restart required)
+- CodeMirror theme updates via compartments
 
 ### 3. Tabbed Interface
 - Multiple files open simultaneously
 - Dirty state indicator (unsaved changes)
 - Close tab with unsaved changes prompt
+- Close All / Close Others via context menu
+- Session restore on app launch
 
-### 4. Command Bar
-Works in both raw and WYSIWYG modes:
+### 4. Document Outline
+- Collapsible sidebar showing document headings
+- Click to navigate to heading
+- Toggle with `Cmd+Shift+O`
+
+### 5. Find & Replace
+- Find with `Cmd+F`, Replace with `Cmd+H`
+- Match highlighting and navigation
+- Replace one or all matches
+
+### 6. Export
+- Export to HTML with full styling
+- Export to PDF via Electron's printToPDF
+- Preserves current theme settings
+
+### 7. Command Bar
+Works in all modes:
 - Bold (`Cmd+B`), Italic (`Cmd+I`)
 - Headings H1-H3 (`Cmd+1/2/3`)
 - Code inline and block
 - Links (`Cmd+K`), Images (dialog)
+- Tables (`Cmd+T`) with visual editor
 - Lists (bulleted & numbered), Blockquotes
 
-### 5. File Operations
-- **New**: `Cmd+N`
-- **Open**: `Cmd+O`
-- **Save**: `Cmd+S`
-- **Save As**: `Cmd+Shift+S`
-- **Close Tab**: `Cmd+W`
-- Recent files menu
-- Drag-and-drop .md files to open
+### 8. Status Bar
+- Word count
+- Character count
+- Cursor position (line, column)
 
-### 6. Auto-Update
+### 9. Settings
+- Font size (12-24px)
+- Font family (with preview in dropdown)
+- Theme colors with Light/Dark/Custom presets
+- Auto-save with configurable interval
+- Spell check toggle
+- Settings migration for version upgrades
+
+### 10. Focus Mode
+- Hides tab bar, command bar, status bar, outline
+- Full-screen distraction-free editing
+- Exit with `Escape` or `Cmd+Shift+Enter`
+
+### 11. Auto-Update
 - Checks GitHub releases on startup
 - Downloads and installs updates
-- Manual check via menu ("Check for Updates...")
+- Manual check via menu
 
 ## Component Responsibilities
 
 ### Main Process (`src/main/`)
-- **main.ts**: Window creation, app lifecycle, file dialogs, IPC handlers
+- **main.ts**: Window creation, app lifecycle, file dialogs, IPC handlers, PDF export
 - **menu.ts**: Native menu bar with File, Edit, Format, View, Window, Help
-- **store.ts**: JSON-based storage for recent files list
+- **store.ts**: JSON-based storage for settings, recent files, session
 - **updater.ts**: electron-updater integration for auto-updates
 
 ### Preload Script (`src/preload/`)
 - **preload.ts**: Secure context bridge exposing file operations and IPC to renderer
 
 ### Renderer Process (`src/renderer/`)
-- **renderer.ts**: Main orchestrator, state management, mode switching, dark mode
-- **editor.ts**: Textarea-based raw editor with text manipulation functions
+- **renderer.ts**: Main orchestrator, state management, mode switching, theme application
+- **editor.ts**: CodeMirror 6 with markdown highlighting, dynamic theming via compartments
 - **wysiwyg.ts**: Milkdown WYSIWYG editor wrapper with formatting commands
-- **tabs.ts**: Tab bar with add/close/switch functionality, dirty state tracking
-- **commandbar.ts**: Toolbar buttons, delegates to editor or wysiwyg based on mode
-- **imagedialog.ts**: Modal for inserting images (URL or local file)
+- **tabs.ts**: Tab bar with context menu, dirty state, session management
+- **commandbar.ts**: Toolbar buttons, delegates to editor based on mode
+- **findreplace.ts**: Find bar UI, match navigation, replace functionality
+- **statusbar.ts**: Word/char count, cursor position display
+- **outline.ts**: Heading extraction, tree rendering, scroll-to navigation
+- **export.ts**: HTML generation, PDF export via main process
+- **tabledialog.ts**: Table size picker, preview grid, markdown generation
+- **settingsdialog.ts**: Settings form, theme color presets, font preview
 
 ## Key Implementation Details
 
-### Dependencies
-Runtime dependencies (in `dependencies`, not `devDependencies`) are required for the packaged app:
-- `electron-updater` and ALL its transitive deps must be listed explicitly
-- Current runtime deps: electron-updater, fs-extra, graceful-fs, jsonfile, universalify, builder-util-runtime, lazy-val, semver, debug, ms, sax, js-yaml, argparse, lodash.escaperegexp, lodash.isequal, tiny-typed-emitter
+### CodeMirror 6 Theming
+Dynamic theme updates using compartments:
+```typescript
+const themeCompartment = new Compartment();
+const highlightCompartment = new Compartment();
 
-### Build Configuration
-- `files` in package.json lists specific folders to avoid bundling old artifacts:
-  ```json
-  "files": [
-    "dist/main/**/*",
-    "dist/preload/**/*",
-    "dist/renderer/**/*",
-    "assets/**/*"
-  ]
-  ```
-- Renderer is bundled by esbuild into single file (includes Milkdown)
-- Bundled renderer deps go in `devDependencies` (Milkdown, marked, highlight.js)
+// Update theme at runtime
+editorView.dispatch({
+  effects: [
+    themeCompartment.reconfigure(createEditorTheme(fg, bg)),
+    highlightCompartment.reconfigure(syntaxHighlighting(createMarkdownHighlighting(headingColor))),
+  ],
+});
+```
+
+### Settings Structure
+```typescript
+interface ThemeSettings {
+  foreground: { preset: "light" | "dark" | "custom"; custom: string };
+  background: { preset: "light" | "dark" | "custom"; custom: string };
+  heading: { preset: "light" | "dark" | "custom"; custom: string };
+  tableHeader: { preset: "light" | "dark" | "custom"; custom: string };
+}
+
+interface Settings {
+  fontSize: number;
+  fontFamily: string;
+  theme: ThemeSettings;
+  autoSave: boolean;
+  autoSaveInterval: number;
+  spellCheck: boolean;
+}
+```
 
 ### IPC Pattern
 Main ↔ Renderer communication via preload script with contextBridge:
-- Main sends events: `file:new`, `file:open-path`, `view:toggle`, `view:toggle-dark`, `format:apply`
-- Renderer invokes: `file:read`, `file:save`, `file:save-dialog`, `file:open-dialog`, `dialog:confirm`
+- Main sends events: `file:new`, `file:open-path`, `view:toggle`, `format:apply`, `export:html`, `export:pdf`
+- Renderer invokes: `file:read`, `file:save`, `export:dialog`, `export:pdf`, `settings:get`, `session:save`
+
+### Dependencies
+Runtime dependencies (in `dependencies`) required for packaged app:
+- `electron-updater` and all transitive deps
+- Current: electron-updater, fs-extra, graceful-fs, jsonfile, universalify, builder-util-runtime, lazy-val, semver, debug, ms, sax, js-yaml, argparse, lodash.escaperegexp, lodash.isequal, tiny-typed-emitter
+
+Bundled deps (in `devDependencies`, bundled by esbuild):
+- CodeMirror packages, Milkdown, marked, highlight.js
 
 ## Development Commands
 
@@ -165,21 +232,23 @@ pnpm package:all      # Package all platforms
 
 | Version | Key Changes |
 |---------|-------------|
+| 0.1.9   | Theme settings, syntax highlighting (CodeMirror 6), export PDF/HTML, table editor, find/replace, split view, outline, focus mode, session restore, auto-save |
+| 0.1.8   | Settings dialog for font and colors |
 | 0.1.7   | Dark mode with system theme detection |
 | 0.1.6   | Fixed all electron-updater runtime dependencies |
-| 0.1.4-5 | Auto-update support (had missing deps) |
+| 0.1.4-5 | Auto-update support |
 | 0.1.3   | WYSIWYG editing with Milkdown, drag-and-drop files |
 | 0.1.2   | Bug fixes, app icon |
-| 0.1.1   | Image picker for URLs or files, cross-platform support |
+| 0.1.1   | Image picker, cross-platform support |
 
 ## State Management
 
-Application state is managed in the renderer process:
-
+Application state in renderer process:
 ```typescript
-type ViewMode = "raw" | "preview";
+type ViewMode = "raw" | "preview" | "split";
 let viewMode: ViewMode = "raw";
-let darkMode: boolean = false;  // Initialized from system preference
+let focusMode: boolean = false;
+let currentSettings: Settings | null = null;
 
 interface Tab {
   id: string;
