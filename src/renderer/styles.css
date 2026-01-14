@@ -46,7 +46,10 @@
 :root {
   --editor-font-size: 14px;
   --editor-font-family: monospace;
-  /* --editor-fg-color and --editor-bg-color are set dynamically when not default */
+  --editor-fg-color: #e5e5e5;
+  --editor-bg-color: #1e1e1e;
+  --editor-heading-color: #79c0ff;
+  --editor-table-header-bg: #2d333b;
 }
 
 /* Editor styles */
@@ -222,14 +225,27 @@
 /* Apply settings to preview container */
 #preview-container {
   font-family: var(--editor-font-family);
-  background-color: var(--editor-bg-color, white);
-  color: var(--editor-fg-color, #1f2937);
+  background-color: var(--editor-bg-color);
+  color: var(--editor-fg-color);
 }
 
 #preview-container .prose {
   font-size: 1rem;
   color: inherit;
   font-family: inherit;
+}
+
+#preview-container .prose h1,
+#preview-container .prose h2,
+#preview-container .prose h3,
+#preview-container .prose h4,
+#preview-container .prose h5,
+#preview-container .prose h6 {
+  color: var(--editor-heading-color);
+}
+
+#preview-container .prose th {
+  background-color: var(--editor-table-header-bg);
 }
 
 #preview-container .ProseMirror {
@@ -243,54 +259,219 @@
   @apply h-full;
 }
 
-/* Dark mode for preview - only apply if no custom colors set */
-#preview-container.dark-mode {
-  background-color: var(--editor-bg-color, #111827);
-  color: var(--editor-fg-color, #f3f4f6);
+
+/* Tab context menu */
+.tab-context-menu {
+  @apply fixed bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-32;
 }
 
-#preview-container.dark-mode .prose {
-  color: inherit;
+.tab-context-menu-item {
+  @apply px-3 py-1.5 text-sm text-gray-200 hover:bg-gray-700 cursor-pointer;
 }
 
-#preview-container.dark-mode .prose h1 {
-  @apply border-b-gray-700;
+.tab-context-menu-item:first-child {
+  @apply rounded-t;
 }
 
-#preview-container.dark-mode .prose h2 {
-  @apply border-b-gray-800;
+.tab-context-menu-item:last-child {
+  @apply rounded-b;
 }
 
-#preview-container.dark-mode .prose a {
-  @apply text-blue-400;
+/* Status bar */
+.status-bar {
+  @apply flex items-center gap-2 px-4 py-1 bg-tab-bg border-t border-tab-border text-gray-400 text-xs flex-shrink-0;
 }
 
-#preview-container.dark-mode .prose blockquote {
-  @apply border-gray-600 text-gray-400;
+.status-separator {
+  @apply text-gray-600;
 }
 
-#preview-container.dark-mode .prose code {
-  @apply bg-gray-800 text-gray-200;
+/* Find bar */
+.find-bar {
+  @apply bg-toolbar-bg border-b border-toolbar-border px-2 py-1 flex-shrink-0;
 }
 
-#preview-container.dark-mode .prose pre {
-  @apply bg-gray-950;
+.find-bar-row {
+  @apply flex items-center gap-2;
 }
 
-#preview-container.dark-mode .prose hr {
-  @apply border-gray-700;
+.find-bar-row + .find-bar-row {
+  @apply mt-1;
 }
 
-#preview-container.dark-mode .prose th,
-#preview-container.dark-mode .prose td {
-  @apply border-gray-600;
+.find-input {
+  @apply flex-1 bg-gray-700 text-white rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500;
 }
 
-#preview-container.dark-mode .prose th {
-  @apply bg-gray-800;
+.find-match-count {
+  @apply text-xs text-gray-400 min-w-16 text-right;
 }
 
-/* Dark mode toggle button active state */
-.cmd-btn.dark-mode-active {
-  @apply bg-gray-600 text-white;
+.find-btn {
+  @apply p-1 rounded text-gray-400 hover:text-white hover:bg-gray-600 transition-colors;
+}
+
+.find-btn-text {
+  @apply px-2 py-1 rounded text-sm text-gray-300 hover:text-white hover:bg-gray-600 transition-colors;
+}
+
+/* Split view */
+.split-view {
+  @apply flex-row;
+}
+
+.split-view #editor-container {
+  flex: none;
+  overflow: hidden;
+}
+
+.split-view #preview-container {
+  flex: none;
+  overflow: auto;
+}
+
+/* Resize handle for split view */
+.split-resize-handle {
+  @apply flex-shrink-0 cursor-col-resize bg-gray-700 hover:bg-blue-500 transition-colors;
+  width: 4px;
+}
+
+.split-resize-handle:active {
+  @apply bg-blue-600;
+}
+
+/* Outline panel */
+.outline-panel {
+  @apply w-64 bg-gray-800 border-r border-gray-700 flex flex-col flex-shrink-0 overflow-hidden;
+}
+
+.outline-panel.hidden {
+  display: none !important;
+}
+
+.outline-header {
+  @apply flex items-center justify-between px-3 py-2 border-b border-gray-700;
+}
+
+.outline-title {
+  @apply text-sm font-medium text-gray-300;
+}
+
+.outline-close-btn {
+  @apply p-1 text-gray-400 hover:text-white rounded hover:bg-gray-700;
+}
+
+.outline-content {
+  @apply flex-1 overflow-auto px-2 py-2;
+}
+
+.outline-empty {
+  @apply text-gray-500 text-sm text-center py-4;
+}
+
+.outline-list {
+  @apply list-none m-0 p-0;
+}
+
+.outline-list .outline-list {
+  @apply ml-4;
+}
+
+.outline-item {
+  @apply my-0.5;
+}
+
+.outline-item.collapsed > .outline-list {
+  @apply hidden;
+}
+
+.outline-item.collapsed .outline-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.outline-item-wrapper {
+  @apply flex items-center gap-1;
+}
+
+.outline-toggle {
+  @apply p-0.5 text-gray-500 hover:text-gray-300 rounded;
+}
+
+.outline-toggle svg {
+  @apply transition-transform;
+}
+
+.outline-spacer {
+  @apply w-4;
+}
+
+.outline-link {
+  @apply text-sm text-gray-400 hover:text-white no-underline truncate block py-0.5 px-1 rounded hover:bg-gray-700;
+}
+
+.outline-link.level-1 {
+  @apply font-semibold text-gray-200;
+}
+
+.outline-link.level-2 {
+  @apply font-medium text-gray-300;
+}
+
+.outline-link.level-3 {
+  @apply text-gray-400;
+}
+
+/* Focus mode */
+.focus-mode #title-bar-drag,
+.focus-mode #tab-bar,
+.focus-mode #command-bar,
+.focus-mode #status-bar,
+.focus-mode #find-bar,
+.focus-mode #outline-panel {
+  @apply hidden;
+}
+
+.focus-mode #content {
+  @apply h-screen;
+}
+
+.focus-mode #editor-container,
+.focus-mode #preview-container {
+  @apply h-full;
+}
+
+/* Table dialog */
+.table-preview-container {
+  @apply bg-gray-700 rounded p-2;
+}
+
+.table-preview-grid {
+  @apply w-full border-collapse;
+}
+
+.table-preview-grid th,
+.table-preview-grid td {
+  @apply p-1;
+}
+
+.table-cell-input {
+  @apply w-full bg-gray-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500;
+  min-width: 80px;
+}
+
+.table-header-input {
+  @apply bg-gray-500 font-medium;
+}
+
+/* CodeMirror container */
+.cm-container {
+  @apply h-full overflow-hidden;
+}
+
+.cm-container .cm-editor {
+  height: 100%;
+}
+
+.cm-container .cm-scroller {
+  overflow: auto !important;
 }

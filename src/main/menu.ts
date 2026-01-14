@@ -124,11 +124,43 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
         },
         { type: "separator" },
         {
+          label: "Export",
+          submenu: [
+            {
+              label: "Export as HTML...",
+              click: () => {
+                if (mainWindow) {
+                  mainWindow.webContents.send("export:html");
+                }
+              },
+            },
+            {
+              label: "Export as PDF...",
+              accelerator: "CmdOrCtrl+Shift+E",
+              click: () => {
+                if (mainWindow) {
+                  mainWindow.webContents.send("export:pdf");
+                }
+              },
+            },
+          ],
+        },
+        { type: "separator" },
+        {
           label: "Close Tab",
           accelerator: "CmdOrCtrl+W",
           click: () => {
             if (mainWindow) {
               mainWindow.webContents.send("tab:close");
+            }
+          },
+        },
+        {
+          label: "Close All Tabs",
+          accelerator: "CmdOrCtrl+Shift+W",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send("tab:close-all");
             }
           },
         },
@@ -160,6 +192,28 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
               { role: "delete" as const },
               { type: "separator" as const },
               { role: "selectAll" as const },
+            ]),
+        { type: "separator" },
+        {
+          label: "Find",
+          accelerator: "CmdOrCtrl+F",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send("edit:find");
+            }
+          },
+        },
+        {
+          label: "Replace",
+          accelerator: "CmdOrCtrl+H",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send("edit:replace");
+            }
+          },
+        },
+        ...(!isMac
+          ? [
               { type: "separator" as const },
               {
                 label: "Settings...",
@@ -170,7 +224,8 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
                   }
                 },
               },
-            ]),
+            ]
+          : []),
       ],
     },
     {
@@ -278,13 +333,23 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
             }
           },
         },
+        { type: "separator" },
+        {
+          label: "Insert Table...",
+          accelerator: "CmdOrCtrl+T",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send("format:apply", "table");
+            }
+          },
+        },
       ],
     },
     {
       label: "View",
       submenu: [
         {
-          label: "Toggle Preview",
+          label: "Toggle View Mode",
           accelerator: "CmdOrCtrl+P",
           click: () => {
             if (mainWindow) {
@@ -293,11 +358,29 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
           },
         },
         {
-          label: "Toggle Dark Mode",
-          accelerator: "CmdOrCtrl+D",
+          label: "Split View",
+          accelerator: "CmdOrCtrl+\\",
           click: () => {
             if (mainWindow) {
-              mainWindow.webContents.send("view:toggle-dark");
+              mainWindow.webContents.send("view:split");
+            }
+          },
+        },
+        {
+          label: "Toggle Outline",
+          accelerator: "CmdOrCtrl+Shift+O",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send("view:toggle-outline");
+            }
+          },
+        },
+        {
+          label: "Focus Mode",
+          accelerator: "CmdOrCtrl+Shift+Enter",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send("view:focus-mode");
             }
           },
         },

@@ -5,6 +5,7 @@ import {
   insertAtLineStart,
 } from "./editor";
 import { showImageDialog } from "./imagedialog";
+import { showTableDialog } from "./tabledialog";
 import {
   applyFormat as applyWysiwygFormat,
   isEditorActive,
@@ -22,9 +23,16 @@ export type FormatType =
   | "image"
   | "ul"
   | "ol"
-  | "quote";
+  | "quote"
+  | "table";
 
 export function applyFormat(format: FormatType): void {
+  // Table dialog works for both modes
+  if (format === "table") {
+    showTableDialog();
+    return;
+  }
+
   // If WYSIWYG editor is active, use its formatting
   if (isEditorActive()) {
     if (format === "image") {

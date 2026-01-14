@@ -146,6 +146,19 @@ ipcMain.handle("settings:reset", () => {
   }
 });
 
+ipcMain.handle("session:get", () => {
+  return store.getSession();
+});
+
+ipcMain.handle("session:save", (_, session) => {
+  try {
+    store.setSession(session);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
 ipcMain.handle(
   "dialog:confirm",
   async (_, message: string, detail?: string) => {
@@ -163,6 +176,78 @@ ipcMain.handle(
     return result.response;
   }
 );
+
+// Export handlers
+ipcMain.handle("export:dialog", async (_, format: string, defaultName: string) => {
+  if (!mainWindow) return { success: false, error: "No window" };
+
+  const filters = format === "pdf"
+    ? [{ name: "PDF", extensions: ["pdf"] }]
+    : [{ name: "HTML", extensions: ["html", "htm"] }];
+
+  const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: defaultName,
+    filters,
+  });
+
+  if (result.canceled || !result.filePath) {
+    return { success: false, canceled: true };
+  }
+
+  return { success: true, filePath: result.filePath };
+});
+
+ipcMain.handle("export:file", async (_, filePath: string, content: string) => {
+  try {
+    fs.writeFileSync(filePath, content, "utf-8");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle("export:pdf", async (_, filePath: string, html: string) => {
+  if (!mainWindow) return { success: false, error: "No window" };
+
+  try {
+    // Create a hidden window to render HTML
+    const printWindow = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+      },
+    });
+
+    // Load the HTML content
+    await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+
+    // Wait for content to render
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Generate PDF
+    const pdfBuffer = await printWindow.webContents.printToPDF({
+      printBackground: true,
+      pageSize: "A4",
+      margins: {
+        top: 0.5,
+        bottom: 0.5,
+        left: 0.5,
+        right: 0.5,
+      },
+    });
+
+    // Write PDF to file
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    // Close the print window
+    printWindow.close();
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
 
 // App lifecycle
 app.whenReady().then(() => {

@@ -143,6 +143,62 @@ export async function closeTab(id: string): Promise<boolean> {
   return true;
 }
 
+let contextMenu: HTMLElement | null = null;
+
+function hideContextMenu(): void {
+  if (contextMenu) {
+    contextMenu.remove();
+    contextMenu = null;
+  }
+}
+
+function showContextMenu(e: MouseEvent, tabId: string): void {
+  e.preventDefault();
+  hideContextMenu();
+
+  contextMenu = document.createElement("div");
+  contextMenu.className = "tab-context-menu";
+
+  const closeItem = document.createElement("div");
+  closeItem.className = "tab-context-menu-item";
+  closeItem.textContent = "Close";
+  closeItem.addEventListener("click", () => {
+    hideContextMenu();
+    closeTab(tabId);
+  });
+
+  const closeOthersItem = document.createElement("div");
+  closeOthersItem.className = "tab-context-menu-item";
+  closeOthersItem.textContent = "Close Others";
+  closeOthersItem.addEventListener("click", () => {
+    hideContextMenu();
+    closeOtherTabs(tabId);
+  });
+
+  const closeAllItem = document.createElement("div");
+  closeAllItem.className = "tab-context-menu-item";
+  closeAllItem.textContent = "Close All";
+  closeAllItem.addEventListener("click", () => {
+    hideContextMenu();
+    closeAllTabs();
+  });
+
+  contextMenu.appendChild(closeItem);
+  contextMenu.appendChild(closeOthersItem);
+  contextMenu.appendChild(closeAllItem);
+
+  // Position the menu
+  contextMenu.style.left = `${e.clientX}px`;
+  contextMenu.style.top = `${e.clientY}px`;
+
+  document.body.appendChild(contextMenu);
+
+  // Close menu when clicking outside
+  setTimeout(() => {
+    document.addEventListener("click", hideContextMenu, { once: true });
+  }, 0);
+}
+
 function renderTabs(): void {
   if (!tabsContainer) return;
   const container = tabsContainer;
@@ -182,10 +238,95 @@ function renderTabs(): void {
       setActiveTab(tab.id);
     });
 
+    tabEl.addEventListener("contextmenu", (e) => {
+      showContextMenu(e, tab.id);
+    });
+
     container.appendChild(tabEl);
   });
 }
 
 export function hasTabs(): boolean {
   return tabs.length > 0;
+}
+
+export function getActiveTabIndex(): number {
+  if (!activeTabId) return 0;
+  const index = tabs.findIndex((t) => t.id === activeTabId);
+  return index >= 0 ? index : 0;
+}
+
+export async function closeAllTabs(): Promise<void> {
+  // Collect all dirty tabs
+  const dirtyTabs = tabs.filter((t) => t.isDirty);
+
+  if (dirtyTabs.length > 0) {
+    const electron = (window as any).electron;
+    const message = dirtyTabs.length === 1
+      ? `Do you want to save changes to "${dirtyTabs[0].fileName}"?`
+      : `Do you want to save changes to ${dirtyTabs.length} unsaved files?`;
+
+    const result = await electron.showConfirmDialog(
+      message,
+      "Your changes will be lost if you don't save them."
+    );
+
+    if (result === 1) {
+      // Cancel
+      return;
+    }
+
+    // result === 0: Don't Save - continue closing
+    // result === 2: Save - for now just mark them clean (caller handles saving)
+    if (result === 2) {
+      // Mark all tabs as clean to avoid individual prompts
+      // Caller is responsible for actually saving
+      return;
+    }
+  }
+
+  // Clear all tabs
+  tabs = [];
+  activeTabId = null;
+  renderTabs();
+  onTabChange?.(null);
+  onTabsUpdate?.([]);
+}
+
+export async function closeOtherTabs(keepTabId: string): Promise<void> {
+  const keepTab = getTab(keepTabId);
+  if (!keepTab) return;
+
+  // Collect dirty tabs that will be closed
+  const dirtyTabs = tabs.filter((t) => t.id !== keepTabId && t.isDirty);
+
+  if (dirtyTabs.length > 0) {
+    const electron = (window as any).electron;
+    const message = dirtyTabs.length === 1
+      ? `Do you want to save changes to "${dirtyTabs[0].fileName}"?`
+      : `Do you want to save changes to ${dirtyTabs.length} unsaved files?`;
+
+    const result = await electron.showConfirmDialog(
+      message,
+      "Your changes will be lost if you don't save them."
+    );
+
+    if (result === 1) {
+      // Cancel
+      return;
+    }
+
+    // result === 0: Don't Save - continue closing
+    // result === 2: Save - for now just discard (caller handles saving)
+    if (result === 2) {
+      return;
+    }
+  }
+
+  // Keep only the specified tab
+  tabs = [keepTab];
+  activeTabId = keepTabId;
+  renderTabs();
+  onTabChange?.(keepTab);
+  onTabsUpdate?.(tabs);
 }
