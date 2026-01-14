@@ -49,6 +49,16 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
                 click: () => checkForUpdates(true),
               },
               { type: "separator" as const },
+              {
+                label: "Settings...",
+                accelerator: "CmdOrCtrl+,",
+                click: () => {
+                  if (mainWindow) {
+                    mainWindow.webContents.send("view:settings");
+                  }
+                },
+              },
+              { type: "separator" as const },
               { role: "services" as const },
               { type: "separator" as const },
               { role: "hide" as const },
@@ -150,6 +160,16 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
               { role: "delete" as const },
               { type: "separator" as const },
               { role: "selectAll" as const },
+              { type: "separator" as const },
+              {
+                label: "Settings...",
+                accelerator: "CmdOrCtrl+,",
+                click: () => {
+                  if (mainWindow) {
+                    mainWindow.webContents.send("view:settings");
+                  }
+                },
+              },
             ]),
       ],
     },

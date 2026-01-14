@@ -2,8 +2,23 @@ import { app } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 
+export interface Settings {
+  fontSize: number;
+  fontFamily: string;
+  foregroundColor: string;
+  backgroundColor: string;
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  fontSize: 14,
+  fontFamily: "monospace",
+  foregroundColor: "default",
+  backgroundColor: "default",
+};
+
 interface StoreData {
   recentFiles: string[];
+  settings: Settings;
 }
 
 const MAX_RECENT_FILES = 10;
@@ -26,7 +41,7 @@ class Store {
     } catch (error) {
       console.error("Failed to load store:", error);
     }
-    return { recentFiles: [] };
+    return { recentFiles: [], settings: { ...DEFAULT_SETTINGS } };
   }
 
   private save(): void {
@@ -58,6 +73,25 @@ class Store {
 
   clearRecentFiles(): void {
     this.data.recentFiles = [];
+    this.save();
+  }
+
+  getSettings(): Settings {
+    // Ensure settings exist (for migration from older store versions)
+    if (!this.data.settings) {
+      this.data.settings = { ...DEFAULT_SETTINGS };
+      this.save();
+    }
+    return { ...this.data.settings };
+  }
+
+  setSettings(settings: Settings): void {
+    this.data.settings = { ...settings };
+    this.save();
+  }
+
+  resetSettings(): void {
+    this.data.settings = { ...DEFAULT_SETTINGS };
     this.save();
   }
 }

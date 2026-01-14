@@ -21,6 +21,7 @@ import {
   focus as focusWysiwyg,
   destroyEditor,
 } from "./wysiwyg";
+import { initSettingsDialog, showSettingsDialog, Settings } from "./settingsdialog";
 
 // Type for electron API
 declare global {
@@ -62,6 +63,10 @@ declare global {
       onFormatApply: (callback: (format: string) => void) => void;
       onViewToggle: (callback: () => void) => void;
       onDarkModeToggle: (callback: () => void) => void;
+      onViewSettings: (callback: () => void) => void;
+      getSettings: () => Promise<Settings>;
+      saveSettings: (settings: Settings) => Promise<{ success: boolean; error?: string }>;
+      resetSettings: () => Promise<{ success: boolean; settings?: Settings; error?: string }>;
     };
   }
 }
@@ -69,6 +74,7 @@ declare global {
 type ViewMode = "raw" | "preview";
 let viewMode: ViewMode = "raw";
 let darkMode: boolean = false;
+let currentSettings: Settings | null = null;
 
 // DOM Elements
 let editorContainer: HTMLElement;
@@ -114,6 +120,7 @@ function init(): void {
   initWysiwyg(preview, handleWysiwygChange);
   initCommandBar(commandBar);
   initImageDialog();
+  initSettingsDialog(handleSaveSettings);
 
   // Set up event listeners
   newTabBtn.addEventListener("click", () => createNewTab());
@@ -129,6 +136,7 @@ function init(): void {
   window.electron.onFormatApply((format) => applyFormat(format as FormatType));
   window.electron.onViewToggle(() => toggleViewMode());
   window.electron.onDarkModeToggle(() => toggleDarkMode());
+  window.electron.onViewSettings(() => openSettings());
 
   // Set up drag and drop for files
   setupDragAndDrop();
@@ -136,8 +144,63 @@ function init(): void {
   // Initialize dark mode based on system preference
   initDarkMode();
 
+  // Load and apply settings
+  loadSettings();
+
   // Show empty state initially
   updateUI();
+}
+
+async function loadSettings(): Promise<void> {
+  try {
+    const settings = await window.electron.getSettings();
+    currentSettings = settings;
+    applySettings(settings);
+  } catch (error) {
+    console.error("Failed to load settings:", error);
+  }
+}
+
+function applySettings(settings: Settings): void {
+  const root = document.documentElement;
+
+  // Apply font size directly to root element for rem calculations
+  root.style.fontSize = `${settings.fontSize}px`;
+
+  // Apply font family as CSS custom property
+  root.style.setProperty("--editor-font-family", settings.fontFamily);
+
+  // Apply foreground color
+  if (settings.foregroundColor === "default") {
+    root.style.removeProperty("--editor-fg-color");
+  } else {
+    root.style.setProperty("--editor-fg-color", settings.foregroundColor);
+  }
+
+  // Apply background color
+  if (settings.backgroundColor === "default") {
+    root.style.removeProperty("--editor-bg-color");
+  } else {
+    root.style.setProperty("--editor-bg-color", settings.backgroundColor);
+  }
+}
+
+function openSettings(): void {
+  if (currentSettings) {
+    showSettingsDialog(currentSettings);
+  }
+}
+
+async function handleSaveSettings(settings: Settings): Promise<void> {
+  try {
+    const result = await window.electron.saveSettings(settings);
+    if (result.success) {
+      currentSettings = settings;
+      applySettings(settings);
+    }
+  } catch (error) {
+    console.error("Failed to save settings:", error);
+  }
 }
 
 function initDarkMode(): void {

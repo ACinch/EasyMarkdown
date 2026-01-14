@@ -8,6 +8,19 @@ export interface FileResult {
   canceled?: boolean;
 }
 
+export interface Settings {
+  fontSize: number;
+  fontFamily: string;
+  foregroundColor: string;
+  backgroundColor: string;
+}
+
+export interface SettingsResult {
+  success: boolean;
+  settings?: Settings;
+  error?: string;
+}
+
 export interface ElectronAPI {
   // Platform info
   platform: string;
@@ -22,6 +35,11 @@ export interface ElectronAPI {
   // Recent files
   getRecentFiles: () => Promise<string[]>;
 
+  // Settings
+  getSettings: () => Promise<Settings>;
+  saveSettings: (settings: Settings) => Promise<{ success: boolean; error?: string }>;
+  resetSettings: () => Promise<SettingsResult>;
+
   // Dialogs
   showConfirmDialog: (message: string, detail?: string) => Promise<number>;
 
@@ -34,6 +52,7 @@ export interface ElectronAPI {
   onFormatApply: (callback: (format: string) => void) => void;
   onViewToggle: (callback: () => void) => void;
   onDarkModeToggle: (callback: () => void) => void;
+  onViewSettings: (callback: () => void) => void;
 
   // Remove listeners
   removeAllListeners: (channel: string) => void;
@@ -54,6 +73,11 @@ const api: ElectronAPI = {
 
   // Recent files
   getRecentFiles: () => ipcRenderer.invoke("recent:get"),
+
+  // Settings
+  getSettings: () => ipcRenderer.invoke("settings:get"),
+  saveSettings: (settings: Settings) => ipcRenderer.invoke("settings:save", settings),
+  resetSettings: () => ipcRenderer.invoke("settings:reset"),
 
   // Dialogs
   showConfirmDialog: (message: string, detail?: string) =>
@@ -83,6 +107,9 @@ const api: ElectronAPI = {
   },
   onDarkModeToggle: (callback: () => void) => {
     ipcRenderer.on("view:toggle-dark", callback);
+  },
+  onViewSettings: (callback: () => void) => {
+    ipcRenderer.on("view:settings", callback);
   },
 
   // Remove listeners

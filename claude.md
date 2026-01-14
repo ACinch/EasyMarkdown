@@ -1,188 +1,193 @@
-# OSX Markdown Editor
+# EasyMarkdown
 
-A simple Electron-based markdown editor for macOS.
+A simple, cross-platform markdown editor built with Electron.
 
 ## Project Overview
 
 A lightweight markdown editor that allows users to:
-- Edit markdown files with raw text editing
-- Preview formatted markdown in real-time
+- Edit markdown files with both raw text and WYSIWYG editing
+- Preview formatted markdown with dark mode support
 - Manage multiple files via a tabbed interface
 - Quick-access recent files from the application menu
 - Format text using a command bar
+- Drag-and-drop files to open them
+- Auto-update from GitHub releases
 
-## Architecture
+## Technology Stack
 
-### Technology Stack
-- **Electron** - Cross-platform desktop application framework
-- **TypeScript** - Type-safe JavaScript
+- **Electron** 28.x - Cross-platform desktop application framework
+- **TypeScript** - All source code
+- **Milkdown** - WYSIWYG markdown editor (ProseMirror-based)
 - **Tailwind CSS** - Utility-first CSS framework
-- **pnpm** - Fast, disk space efficient package manager
-- **marked** - Markdown parsing library
-- **highlight.js** - Syntax highlighting for code blocks in preview
+- **esbuild** - Renderer bundling
+- **electron-builder** - Packaging & auto-updates
+- **pnpm** - Package manager
 
-### Project Structure
+## Project Structure
 
 ```
 osxmd/
-├── package.json
-├── pnpm-lock.yaml
-├── tsconfig.json
-├── tailwind.config.js
-├── postcss.config.js
-├── claude.md
 ├── src/
-│   ├── main/
-│   │   ├── main.ts           # Electron main process
-│   │   ├── menu.ts           # Application menu with recent files
-│   │   └── store.ts          # Persistent storage for recent files
+│   ├── main/              # Electron main process
+│   │   ├── main.ts        # App lifecycle, IPC handlers
+│   │   ├── menu.ts        # Application menu
+│   │   ├── store.ts       # Recent files storage
+│   │   └── updater.ts     # Auto-update logic
 │   ├── preload/
-│   │   └── preload.ts        # Secure IPC bridge
-│   └── renderer/
-│       ├── index.html        # Main window HTML
-│       ├── styles.css        # Tailwind imports + custom styles
-│       ├── renderer.ts       # Main renderer logic
-│       ├── tabs.ts           # Tab management
-│       ├── editor.ts         # Text editor component
-│       ├── preview.ts        # Markdown preview component
-│       └── commandbar.ts     # Formatting command bar
-├── dist/                     # Compiled TypeScript output
-└── assets/
-    └── icons/                # Application icons
+│   │   └── preload.ts     # IPC bridge (contextBridge)
+│   └── renderer/          # UI (runs in browser context)
+│       ├── renderer.ts    # Main orchestrator
+│       ├── editor.ts      # Raw textarea editor
+│       ├── wysiwyg.ts     # Milkdown WYSIWYG editor
+│       ├── tabs.ts        # Tab management
+│       ├── commandbar.ts  # Formatting toolbar
+│       ├── imagedialog.ts # Image insertion dialog
+│       ├── styles.css     # Tailwind + custom styles
+│       └── index.html
+├── dist/                  # Compiled output + packages
+├── assets/                # App icons
+├── scripts/
+│   └── build-renderer.js  # esbuild config for renderer
+└── package.json           # Dependencies & build config
 ```
 
-### Component Responsibilities
+## Current Features (v0.1.7)
 
-#### Main Process (`src/main/`)
-- **main.ts**: Window creation, app lifecycle, file dialogs, IPC handlers
-- **menu.ts**: Native menu bar with File, Edit, View, and recent files submenu
-- **store.ts**: JSON-based storage for user preferences and recent files list
+### 1. Dual Editing Modes
+- **Raw mode**: Textarea-based markdown editing
+- **Preview mode**: WYSIWYG editing with Milkdown
+- Toggle with `Cmd+P` or toolbar button
+- Content syncs bidirectionally between modes
 
-#### Preload Script (`src/preload/`)
-- **preload.ts**: Secure context bridge exposing file operations to renderer
+### 2. Dark Mode
+- Toggle with moon icon button or `Cmd+D`
+- Auto-detects system theme preference on startup
+- Syncs when system theme changes
+- Applies to preview/WYSIWYG mode
 
-#### Renderer Process (`src/renderer/`)
-- **renderer.ts**: Orchestrates UI components, handles state
-- **tabs.ts**: Tab bar with add/close/switch functionality, tracks dirty state
-- **editor.ts**: Textarea-based editor with line numbers
-- **preview.ts**: Renders markdown to HTML using marked
-- **commandbar.ts**: Toolbar buttons for bold, italic, headers, links, etc.
+### 3. Tabbed Interface
+- Multiple files open simultaneously
+- Dirty state indicator (unsaved changes)
+- Close tab with unsaved changes prompt
 
-## Key Features
-
-### 1. Tabbed Interface
-- Each open file is a separate tab
-- New tabs can be created for unsaved documents
-- Tabs show filename and dirty indicator (*)
-- Close button on each tab with unsaved changes prompt
-
-### 2. Editor Modes
-- **Raw Mode**: Plain text editing with monospace font
-- **Preview Mode**: Rendered markdown (read-only)
-- Toggle between modes via View menu or keyboard shortcut
-
-### 3. Command Bar
-Formatting buttons that insert markdown syntax:
-- Bold (`**text**`)
-- Italic (`*text*`)
-- Headers (H1-H3)
-- Link (`[text](url)`)
-- Image (`![alt](url)`)
-- Code (inline and block)
-- Lists (ordered and unordered)
-- Blockquote
-
-### 4. Recent Files
-- Stored in user data directory as JSON
-- Maximum 10 recent files
-- Displayed in File menu submenu
-- Click to open file in new tab
+### 4. Command Bar
+Works in both raw and WYSIWYG modes:
+- Bold (`Cmd+B`), Italic (`Cmd+I`)
+- Headings H1-H3 (`Cmd+1/2/3`)
+- Code inline and block
+- Links (`Cmd+K`), Images (dialog)
+- Lists (bulleted & numbered), Blockquotes
 
 ### 5. File Operations
-- **New**: Create empty tab (Cmd+N)
-- **Open**: File dialog for .md files (Cmd+O)
-- **Save**: Save current tab (Cmd+S)
-- **Save As**: Save with new name (Cmd+Shift+S)
+- **New**: `Cmd+N`
+- **Open**: `Cmd+O`
+- **Save**: `Cmd+S`
+- **Save As**: `Cmd+Shift+S`
+- **Close Tab**: `Cmd+W`
+- Recent files menu
+- Drag-and-drop .md files to open
 
-## IPC Channels
+### 6. Auto-Update
+- Checks GitHub releases on startup
+- Downloads and installs updates
+- Manual check via menu ("Check for Updates...")
 
-| Channel | Direction | Purpose |
-|---------|-----------|---------|
-| `file:open` | main→renderer | Send file content to renderer |
-| `file:save` | renderer→main | Request file save |
-| `file:save-as` | renderer→main | Request save as dialog |
-| `file:new` | main→renderer | Create new tab |
-| `file:content` | renderer→main | Send content for saving |
-| `recent:get` | renderer→main | Request recent files list |
-| `recent:list` | main→renderer | Send recent files list |
-| `menu:format` | main→renderer | Apply formatting command |
+## Component Responsibilities
+
+### Main Process (`src/main/`)
+- **main.ts**: Window creation, app lifecycle, file dialogs, IPC handlers
+- **menu.ts**: Native menu bar with File, Edit, Format, View, Window, Help
+- **store.ts**: JSON-based storage for recent files list
+- **updater.ts**: electron-updater integration for auto-updates
+
+### Preload Script (`src/preload/`)
+- **preload.ts**: Secure context bridge exposing file operations and IPC to renderer
+
+### Renderer Process (`src/renderer/`)
+- **renderer.ts**: Main orchestrator, state management, mode switching, dark mode
+- **editor.ts**: Textarea-based raw editor with text manipulation functions
+- **wysiwyg.ts**: Milkdown WYSIWYG editor wrapper with formatting commands
+- **tabs.ts**: Tab bar with add/close/switch functionality, dirty state tracking
+- **commandbar.ts**: Toolbar buttons, delegates to editor or wysiwyg based on mode
+- **imagedialog.ts**: Modal for inserting images (URL or local file)
+
+## Key Implementation Details
+
+### Dependencies
+Runtime dependencies (in `dependencies`, not `devDependencies`) are required for the packaged app:
+- `electron-updater` and ALL its transitive deps must be listed explicitly
+- Current runtime deps: electron-updater, fs-extra, graceful-fs, jsonfile, universalify, builder-util-runtime, lazy-val, semver, debug, ms, sax, js-yaml, argparse, lodash.escaperegexp, lodash.isequal, tiny-typed-emitter
+
+### Build Configuration
+- `files` in package.json lists specific folders to avoid bundling old artifacts:
+  ```json
+  "files": [
+    "dist/main/**/*",
+    "dist/preload/**/*",
+    "dist/renderer/**/*",
+    "assets/**/*"
+  ]
+  ```
+- Renderer is bundled by esbuild into single file (includes Milkdown)
+- Bundled renderer deps go in `devDependencies` (Milkdown, marked, highlight.js)
+
+### IPC Pattern
+Main ↔ Renderer communication via preload script with contextBridge:
+- Main sends events: `file:new`, `file:open-path`, `view:toggle`, `view:toggle-dark`, `format:apply`
+- Renderer invokes: `file:read`, `file:save`, `file:save-dialog`, `file:open-dialog`, `dialog:confirm`
 
 ## Development Commands
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Start development
-pnpm start
-
-# Build TypeScript
-pnpm build
-
-# Build CSS (Tailwind)
-pnpm build:css
-
-# Package for distribution
-pnpm package
+pnpm install          # Install dependencies
+pnpm start            # Dev: build & run
+pnpm build            # Build TypeScript & CSS
+pnpm package:mac      # Package for macOS
+pnpm package:win      # Package for Windows
+pnpm package:linux    # Package for Linux
+pnpm package:all      # Package all platforms
 ```
 
-## TypeScript Configuration
+## GitHub & Releases
 
-The project uses separate tsconfig files:
-- Main process compiled to CommonJS for Electron compatibility
-- Preload script with DOM types disabled
-- Renderer with DOM types enabled
+- **Repository**: https://github.com/ACinch/EasyMarkdown
+- **Auto-update**: Pulls from GitHub releases
+- **Publish config**:
+  ```json
+  "publish": {
+    "provider": "github",
+    "owner": "ACinch",
+    "repo": "EasyMarkdown"
+  }
+  ```
 
-## Tailwind Setup
+## Version History
 
-Tailwind is used for:
-- Tab bar styling with hover/active states
-- Command bar button styling
-- Editor and preview pane layout
-- Responsive spacing and typography
-
-Custom Tailwind config extends with:
-- Monospace font family for editor
-- Custom colors matching macOS aesthetic
-- Prose styles for markdown preview
-
-## Coding Conventions
-
-- Use TypeScript strict mode
-- Define interfaces for all data structures
-- Use ES modules (`import`/`export`)
-- Prefer `const` over `let`, avoid `var`
-- Use async/await for asynchronous operations
-- Keep functions small and focused
+| Version | Key Changes |
+|---------|-------------|
+| 0.1.7   | Dark mode with system theme detection |
+| 0.1.6   | Fixed all electron-updater runtime dependencies |
+| 0.1.4-5 | Auto-update support (had missing deps) |
+| 0.1.3   | WYSIWYG editing with Milkdown, drag-and-drop files |
+| 0.1.2   | Bug fixes, app icon |
+| 0.1.1   | Image picker for URLs or files, cross-platform support |
 
 ## State Management
 
 Application state is managed in the renderer process:
 
 ```typescript
-interface Tab {
-  id: string;           // Unique tab identifier
-  filePath: string | null; // Full path or null for new files
-  fileName: string;     // Display name
-  content: string;      // Current editor content
-  savedContent: string; // Last saved content (for dirty check)
-  isDirty: boolean;     // Has unsaved changes
-}
+type ViewMode = "raw" | "preview";
+let viewMode: ViewMode = "raw";
+let darkMode: boolean = false;  // Initialized from system preference
 
-interface AppState {
-  tabs: Tab[];
-  activeTabId: string | null;
-  viewMode: 'raw' | 'preview';
+interface Tab {
+  id: string;
+  filePath: string | null;
+  fileName: string;
+  content: string;
+  savedContent: string;
+  isDirty: boolean;
 }
 ```
 
@@ -192,3 +197,12 @@ interface AppState {
 - Node integration disabled in renderer
 - All file operations go through preload script
 - File paths validated in main process
+
+## Coding Conventions
+
+- Use TypeScript strict mode
+- Define interfaces for all data structures
+- Use ES modules (`import`/`export`)
+- Prefer `const` over `let`, avoid `var`
+- Use async/await for asynchronous operations
+- Keep functions small and focused

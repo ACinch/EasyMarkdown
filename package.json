@@ -1,6 +1,6 @@
 {
   "name": "easymarkdown",
-  "version": "0.1.7",
+  "version": "0.1.8-beta",
   "description": "A simple, cross-platform markdown editor",
   "main": "dist/main/main.js",
   "scripts": {

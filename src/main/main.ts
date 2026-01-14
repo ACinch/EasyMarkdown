@@ -124,6 +124,28 @@ ipcMain.handle("recent:get", () => {
   return store.getRecentFiles();
 });
 
+ipcMain.handle("settings:get", () => {
+  return store.getSettings();
+});
+
+ipcMain.handle("settings:save", (_, settings) => {
+  try {
+    store.setSettings(settings);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle("settings:reset", () => {
+  try {
+    store.resetSettings();
+    return { success: true, settings: store.getSettings() };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
 ipcMain.handle(
   "dialog:confirm",
   async (_, message: string, detail?: string) => {
