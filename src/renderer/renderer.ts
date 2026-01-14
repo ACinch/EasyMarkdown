@@ -61,12 +61,14 @@ declare global {
       onTabClose: (callback: () => void) => void;
       onFormatApply: (callback: (format: string) => void) => void;
       onViewToggle: (callback: () => void) => void;
+      onDarkModeToggle: (callback: () => void) => void;
     };
   }
 }
 
 type ViewMode = "raw" | "preview";
 let viewMode: ViewMode = "raw";
+let darkMode: boolean = false;
 
 // DOM Elements
 let editorContainer: HTMLElement;
@@ -74,6 +76,7 @@ let previewContainer: HTMLElement;
 let emptyState: HTMLElement;
 let viewModeLabel: HTMLElement;
 let editor: HTMLTextAreaElement;
+let darkModeBtn: HTMLElement;
 
 function init(): void {
   const isMac = window.electron.platform === "darwin";
@@ -91,6 +94,7 @@ function init(): void {
   const newTabBtn = document.getElementById("new-tab-btn")!;
   const toggleViewBtn = document.getElementById("toggle-view-btn")!;
   const titleBarDragRegion = document.getElementById("title-bar-drag")!;
+  darkModeBtn = document.getElementById("toggle-dark-mode-btn")!;
 
   // Hide macOS title bar drag region on Windows/Linux
   if (!isMac && titleBarDragRegion) {
@@ -114,6 +118,7 @@ function init(): void {
   // Set up event listeners
   newTabBtn.addEventListener("click", () => createNewTab());
   toggleViewBtn.addEventListener("click", () => toggleViewMode());
+  darkModeBtn.addEventListener("click", () => toggleDarkMode());
 
   // Set up IPC listeners
   window.electron.onFileNew(() => createNewTab());
@@ -123,12 +128,34 @@ function init(): void {
   window.electron.onTabClose(() => closeCurrentTab());
   window.electron.onFormatApply((format) => applyFormat(format as FormatType));
   window.electron.onViewToggle(() => toggleViewMode());
+  window.electron.onDarkModeToggle(() => toggleDarkMode());
 
   // Set up drag and drop for files
   setupDragAndDrop();
 
+  // Initialize dark mode based on system preference
+  initDarkMode();
+
   // Show empty state initially
   updateUI();
+}
+
+function initDarkMode(): void {
+  // Check system preference
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  if (prefersDark) {
+    darkMode = true;
+    previewContainer.classList.add("dark-mode");
+    darkModeBtn.classList.add("dark-mode-active");
+  }
+
+  // Listen for system theme changes
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+    if (e.matches !== darkMode) {
+      toggleDarkMode();
+    }
+  });
 }
 
 function setupDragAndDrop(): void {
@@ -225,6 +252,18 @@ function updateUI(): void {
     emptyState.classList.remove("hidden");
     editorContainer.classList.add("hidden");
     previewContainer.classList.add("hidden");
+  }
+}
+
+function toggleDarkMode(): void {
+  darkMode = !darkMode;
+
+  if (darkMode) {
+    previewContainer.classList.add("dark-mode");
+    darkModeBtn.classList.add("dark-mode-active");
+  } else {
+    previewContainer.classList.remove("dark-mode");
+    darkModeBtn.classList.remove("dark-mode-active");
   }
 }
 

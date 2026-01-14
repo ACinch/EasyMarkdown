@@ -179,3 +179,54 @@
 #preview-container:not(.hidden) #preview {
   @apply h-full;
 }
+
+/* Dark mode for preview */
+#preview-container.dark-mode {
+  @apply bg-gray-900 text-gray-100;
+}
+
+#preview-container.dark-mode .prose {
+  @apply text-gray-100;
+}
+
+#preview-container.dark-mode .prose h1 {
+  @apply border-b-gray-700;
+}
+
+#preview-container.dark-mode .prose h2 {
+  @apply border-b-gray-800;
+}
+
+#preview-container.dark-mode .prose a {
+  @apply text-blue-400;
+}
+
+#preview-container.dark-mode .prose blockquote {
+  @apply border-gray-600 text-gray-400;
+}
+
+#preview-container.dark-mode .prose code {
+  @apply bg-gray-800 text-gray-200;
+}
+
+#preview-container.dark-mode .prose pre {
+  @apply bg-gray-950;
+}
+
+#preview-container.dark-mode .prose hr {
+  @apply border-gray-700;
+}
+
+#preview-container.dark-mode .prose th,
+#preview-container.dark-mode .prose td {
+  @apply border-gray-600;
+}
+
+#preview-container.dark-mode .prose th {
+  @apply bg-gray-800;
+}
+
+/* Dark mode toggle button active state */
+.cmd-btn.dark-mode-active {
+  @apply bg-gray-600 text-white;
+}

@@ -272,6 +272,15 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
             }
           },
         },
+        {
+          label: "Toggle Dark Mode",
+          accelerator: "CmdOrCtrl+D",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send("view:toggle-dark");
+            }
+          },
+        },
         { type: "separator" },
         { role: "reload" },
         { role: "forceReload" },

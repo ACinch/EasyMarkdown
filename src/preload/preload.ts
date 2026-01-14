@@ -33,6 +33,7 @@ export interface ElectronAPI {
   onTabClose: (callback: () => void) => void;
   onFormatApply: (callback: (format: string) => void) => void;
   onViewToggle: (callback: () => void) => void;
+  onDarkModeToggle: (callback: () => void) => void;
 
   // Remove listeners
   removeAllListeners: (channel: string) => void;
@@ -79,6 +80,9 @@ const api: ElectronAPI = {
   },
   onViewToggle: (callback: () => void) => {
     ipcRenderer.on("view:toggle", callback);
+  },
+  onDarkModeToggle: (callback: () => void) => {
+    ipcRenderer.on("view:toggle-dark", callback);
   },
 
   // Remove listeners
