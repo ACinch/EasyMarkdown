@@ -7,6 +7,7 @@ import {
 } from "electron";
 import * as path from "path";
 import { store } from "./store";
+import { checkForUpdates } from "./updater";
 
 const isMac = process.platform === "darwin";
 
@@ -43,6 +44,10 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
             label: app.name,
             submenu: [
               { role: "about" as const },
+              {
+                label: "Check for Updates...",
+                click: () => checkForUpdates(true),
+              },
               { type: "separator" as const },
               { role: "services" as const },
               { type: "separator" as const },
@@ -303,6 +308,16 @@ export function buildMenu(mainWindow: BrowserWindow | null): Menu {
             await shell.openExternal("https://github.com/ACinch/EasyMarkdown");
           },
         },
+        // Add Check for Updates for Windows/Linux (macOS has it in app menu)
+        ...(!isMac
+          ? [
+              { type: "separator" as const },
+              {
+                label: "Check for Updates...",
+                click: () => checkForUpdates(true),
+              },
+            ]
+          : []),
       ],
     },
   ];

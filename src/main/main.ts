@@ -3,6 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { buildMenu, refreshMenu } from "./menu";
 import { store } from "./store";
+import { initAutoUpdater, checkForUpdatesOnStartup } from "./updater";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -144,6 +145,10 @@ ipcMain.handle(
 // App lifecycle
 app.whenReady().then(() => {
   createWindow();
+
+  // Initialize auto-updater
+  initAutoUpdater();
+  checkForUpdatesOnStartup();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
